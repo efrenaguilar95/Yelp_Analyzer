@@ -4,3 +4,6 @@ DON'T EVER COMMIT THE DATASET. IT IS TOO BIG AND WILL WRECK THE REPO
 
 THIS IS A TO BE CONTINUED, WILL CHECK FOR POSITIVE TO NEGATIVE RATIO ON WORDS
 http://andybromberg.com/sentiment-analysis-python/
+
+GIBB’S SAMPLING
+https://en.wikipedia.org/wiki/Gibbs_sampling
