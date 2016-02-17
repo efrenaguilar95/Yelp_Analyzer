@@ -7,3 +7,6 @@ http://andybromberg.com/sentiment-analysis-python/
 
 GIBB’S SAMPLING
 https://en.wikipedia.org/wiki/Gibbs_sampling
+
+POS TAGGING
+http://www.nltk.org/book/ch05.html
