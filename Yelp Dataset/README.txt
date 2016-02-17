@@ -1,4 +1,4 @@
-Be sure to include the file "yelp_dataset_challenge_academic_dataset" in here for all the code to work.
+﻿Be sure to include the file "yelp_dataset_challenge_academic_dataset" in here for all the code to work.
 The dataset is too big to be included through git
 DON'T EVER COMMIT THE DATASET. IT IS TOO BIG AND WILL WRECK THE REPO
 
@@ -10,3 +10,6 @@ https://en.wikipedia.org/wiki/Gibbs_sampling
 
 POS TAGGING
 http://www.nltk.org/book/ch05.html
+
+OPINION LEXICONS
+https://www.cs.uic.edu/~liub/FBS/sentiment-analysis.html#lexicon
