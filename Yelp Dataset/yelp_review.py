@@ -8,6 +8,8 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.linear_model import LogisticRegression
 import numpy as np
+import matplotlib.pyplot as plt
+import math
 
 def tokenize_simple(text):
     #punctuation = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
@@ -58,6 +60,51 @@ def get_count_vect(data):
         tokens += tokenize_simple(review['text'])
     return count_vect.fit_transform(tokens)
     
+#Takes list of data.most_common yelp and a word limit to process a bar graph of # of most common words
+def plot_common_words(data, word_limit):
+    freq = get_freq_dist(data).most_common(word_limit)
+    fig, axes = plt.subplots()    
+    fig.suptitle('Most Common Words' )
+    axes.set_xlabel('Word')
+    axes.set_ylabel('Number of Tokens')
+    maxWord = word_limit
+    x = np.array(range(0, word_limit+1))
+    histList = []
+    amountWords = []
+    counter = 0
+    while len(histList) < maxWord:
+        histList.append(freq[counter][0])
+        amountWords.append(freq[counter][1])
+        counter += 1
+    axes.bar(range(len(histList)), amountWords, width = .5)
+    plt.xticks(x, histList)
+    return (fig, axes)
+
+#Takes list of yelp data and splits data, converts to list of length for reviews and charts it.
+def plot_review_length(data, n_fold):
+    fig, axes = plt.subplots()
+    fig.suptitle('Length of Reviews Bar Graph')
+    axes.set_xlabel('Length of Review')
+    axes.set_ylabel('Number of Reviews')
+    len_data = FreqDist(len(review['text']) for review in data)
+    fold = math.floor(len(len_data) / n_fold)
+    range_list = []    
+    amountReviews = []
+    x = np.array(range(0, n_fold+1))
+    for num in range(n_fold):
+        range_list.append(str((fold*(num+1)) - fold + 1) + '-' + str(fold*(num+1)))
+        counter = 0
+        for number in range((fold*num+1) - fold + 1, fold*(num+1)):
+            counter += len_data[number]
+        amountReviews.append(counter)
+    axes.bar(range(len(range_list)), amountReviews, width = .5)
+    plt.xticks(x, range_list)
+    return (fig, axes)
+    
+    
+#    x_list = [min()]
+    
+    
 if __name__ == '__main__':
     pass
     """Need to try implementing text classifier as follows:
@@ -66,10 +113,12 @@ if __name__ == '__main__':
         using these two categories
         Run tests on this classifier
         Find ways to improve it"""
-    
     data = load_json_data('yelp_academic_dataset_review.json', 10000)
     train_target = []
     positive_train, negative_train = split_by_rating(data[:9000])
+#    plot_common_words(positive_train, 20)
+#    plot_common_words(negative_train, 20)
+    plot_review_length(positive_train, 4)
     train_target = np.array([1]*len(positive_train) + [0]*len(negative_train))
     train_data = positive_train+negative_train
     positive_test, negative_test = split_by_rating(data[9000:])
