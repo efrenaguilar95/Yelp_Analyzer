@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
+#tokenizes text and makes bag of words
 def tokenize_simple(text):
     #punctuation = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
     #replace_punctuation = str.maketrans(punctuation, " "*len(punctuation))
@@ -20,11 +21,13 @@ def tokenize_simple(text):
     text = text.strip()
     return text.split()
 
+#Removes stopwords in bag of words
 def remove_stopwords_inner(tokens, stopwords):   
     stopwords = set(stopwords)
     tokens = [word for word in tokens if word not in stopwords]
     return tokens
 
+#Loads yelp's json data
 def load_json_data(file, data_amount):
     data = []    
     with open(file) as f:
@@ -36,23 +39,26 @@ def load_json_data(file, data_amount):
             data.append(json.loads(line))
     return data
 
-def split_by_rating(data):
+#Splits the data into positive and negative reviews, caps the length of list
+def split_by_rating(data, cap):
     positive = []
     negative = []
     for review in data:
-        if review['stars'] >= 4:
+        if review['stars'] >= 4 and len(positive) != cap:
             positive.append(review)
-        elif review['stars'] <= 2:
+        elif review['stars'] <= 2 and len(negative) != cap:
             negative.append(review)
     return positive, negative
-    
+
+#Gets the freq dist of bag of words 'DASH IS TEMPORARY FIX'
 def get_freq_dist(data):
     tokens = []
     for review in data:
         tokens += tokenize_simple(review['text'])
-    tokens = remove_stopwords_inner(tokens, stopwords = stopwords.words('english'))
+    tokens = remove_stopwords_inner(tokens, stopwords = stopwords.words('english') + ['time', 'would', 'got', 'i\'m', '-', 'food', 'like', 'really', 'service'])
     return FreqDist(tokens)
 
+#wtf
 def get_count_vect(data):
     tokens = []
     count_vect = CountVectorizer(stop_words = stopwords.words("english"))
@@ -97,14 +103,20 @@ def plot_review_length(data, n_fold):
         for number in range((fold*num+1) - fold + 1, fold*(num+1)):
             counter += len_data[number]
         amountReviews.append(counter)
+    print(amountReviews[0])
     axes.bar(range(len(range_list)), amountReviews, width = .5)
     plt.xticks(x, range_list)
     return (fig, axes)
-    
-    
-#    x_list = [min()]
-    
-    
+
+#Takes the data and removes reviews that do not go past the min or exceed the max. Returns back list of dict.
+def remove_reviews(data, min_len, max_len):
+    copy = []
+    for review in data:
+        if min_len < len(review['text']) < max_len:
+            copy.append(review)
+    return copy
+
+### MAIN FUNCTION    
 if __name__ == '__main__':
     pass
     """Need to try implementing text classifier as follows:
@@ -113,15 +125,15 @@ if __name__ == '__main__':
         using these two categories
         Run tests on this classifier
         Find ways to improve it"""
-    data = load_json_data('yelp_academic_dataset_review.json', 10000)
+    data = load_json_data('yelp_academic_dataset_review.json', 40000)
     train_target = []
-    positive_train, negative_train = split_by_rating(data[:9000])
-#    plot_common_words(positive_train, 20)
-#    plot_common_words(negative_train, 20)
-    plot_review_length(positive_train, 4)
+    positive_train, negative_train = split_by_rating(data[:14000], 2500)
+    plot_common_words(positive_train, 20)
+    plot_common_words(negative_train, 20)
+#    plot_review_length(positive_train, 10)
     train_target = np.array([1]*len(positive_train) + [0]*len(negative_train))
     train_data = positive_train+negative_train
-    positive_test, negative_test = split_by_rating(data[9000:])
+    positive_test, negative_test = split_by_rating(data[14000:], 2500)
     test_target = np.array([1]*len(positive_test) + [0]*len(negative_test))
     test_data = positive_test + negative_test
     count_vect = CountVectorizer(stop_words = stopwords.words("english"))
@@ -150,7 +162,7 @@ if __name__ == '__main__':
     print('Accuracy with Bernoulli naive Bayes: ', '%.4f'
           % np.mean(predicted_bernoulliNB == test_target) )    
     print('Accuracy with Logistic Regression: ', '%.4f'
-          % np.mean(predicted_LR == test_target) )
+          % np.mean(predicted_LR == test_target))
 #    pos_dist = get_freq_dist(positive)
 #    neg_dist = get_freq_dist(negative)
 #    pos_vect = get_count_vect(positive)
