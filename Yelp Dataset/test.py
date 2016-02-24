@@ -4,7 +4,7 @@ Created on Wed Feb 17 11:19:17 2016
 
 @author: Monami
 """
-import re
+import json, re
 import nltk 
 from typing import Iterable, List, Tuple
 from collections import Counter
@@ -15,6 +15,18 @@ from nltk.corpus import stopwords
 from nltk import FreqDist
 import numpy as np
 import math
+
+#Loads yelp's json data
+def load_json_data(file, data_amount):
+    data = []    
+    with open(file) as f:
+        count = 0
+        for line in f:
+            count+= 1
+            if count == data_amount:
+                break
+            data.append(json.loads(line))
+    return data
 
 def load_hamlet():
     """
@@ -73,7 +85,7 @@ def find_adjective(tokens):
     
     previous = None
     for index, t in enumerate(tagged_tokens):
-        print(t)
+        #print(t)
         if t[1] == 'ADJ' and index != 0 :
             previous = tagged_tokens[index - 1]
             #print(t)
@@ -82,13 +94,41 @@ def find_adjective(tokens):
     
     return result
     
-def split_two_word():
-    result = []
+def split_by_rating(data, cap):
+    positive = []
+    negative = []
+    for review in data:
+        if review['stars'] >= 4 and len(positive) != cap:
+            positive.append(review)
+        elif review['stars'] <= 2 and len(negative) != cap:
+            negative.append(review)
+    return positive, negative
     
-    return result
+    
+def remove_stopwords_inner(tokens, stopwords):   
+    stopwords = set(stopwords)
+    tokens = [word for word in tokens if word not in stopwords]
+    return tokens    
+
+def get_two_worded_freq_dist(data):
+    tokens = []
+    for review in data:
+        tokens += tokenize_simple(review['text'])
+    tokens = remove_stopwords_inner(tokens, stopwords = stopwords.words('english') + ['time', 'would', 'got', 'i\'m', '-', 'food', 'like', 'really', 'service'])
+    new_tokens = find_adjective(tokens)
+    return FreqDist(new_tokens)
+
+
 
 if __name__ == '__main__':
-    document = load_hamlet()
-    tokens = tokenize_simple(document)[:50]
-    remove_stopwords_nltk(tokens)
-    find_adjective(tokens)
+    data = load_json_data('yelp_academic_dataset_review.json', 40000)
+    #print(data[:14000])
+    positive_train, negative_train = split_by_rating(data[:14000], 2500)
+    #print(positive_train)
+    freq = get_two_worded_freq_dist(positive_train).most_common(20)
+    print(freq)
+    
+#    document = load_hamlet()
+#    tokens = tokenize_simple(document)[:50]
+#    remove_stopwords_nltk(tokens)
+#    find_adjective(tokens)
