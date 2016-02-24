@@ -11,7 +11,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-#tokenizes text and makes bag of words
+"""
+    Tokenizes a string and returns it as a bag of words
+
+    Parameters
+    ----------
+    text : str
+        A string of raw text to be tokenized
+    
+    Returns
+    -------
+    list of strs
+        One string for each token in the document, in the same order as the original
+"""
 def tokenize_simple(text):
     #punctuation = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
     #replace_punctuation = str.maketrans(punctuation, " "*len(punctuation))
@@ -21,13 +33,41 @@ def tokenize_simple(text):
     text = text.strip()
     return text.split()
 
-#Removes stopwords in bag of words
+"""
+    Removes stopwords within a bag of words
+    
+    Parameters
+    ----------
+    tokens : list of strs
+        The bag of words to be edited
+    stopwords : list of strs
+        The list of stopwords to be removed from the bag of words
+    
+    Returns
+    -------
+    list of strs
+        Returns the new bag of words, with all of the stopwords removed
+"""
 def remove_stopwords_inner(tokens, stopwords):   
     stopwords = set(stopwords)
     tokens = [word for word in tokens if word not in stopwords]
     return tokens
 
-#Loads yelp's json data
+"""
+    Loads the json data from a file and returns it as a dictionary
+    
+    Parameters
+    ----------
+    file : str
+        The location of the json file to be loaded
+    data_amount : int
+        The amount of data entries to be loaded from the json file
+    
+    Returns
+    -------
+    list of dicts
+        Returns the json data, represented by a list of dictionaries
+"""
 def load_json_data(file, data_amount):
     data = []    
     with open(file) as f:
@@ -40,6 +80,23 @@ def load_json_data(file, data_amount):
     return data
 
 #Splits the data into positive and negative reviews, caps the length of list
+"""
+    Splits json data based on if a review is positive or negative with a max
+    number of positive and negative reviews
+    
+    Parameters
+    ---------
+    data : list of dicts
+        The yelp data to be split
+    cap : int
+        The max amount of positive or negative reviews to be in a list
+    
+    Returns
+    -------
+    two lists of json dicts
+        Returns two lists of json data. One for positive data, one for negative
+        data
+"""
 def split_by_rating(data, cap):
     positive = []
     negative = []
@@ -50,7 +107,22 @@ def split_by_rating(data, cap):
             negative.append(review)
     return positive, negative
 
-#Gets the freq dist of bag of words 'DASH IS TEMPORARY FIX'
+#'DASH IS TEMPORARY FIX'
+# DAMN PETER back at it again with that temporary fix
+"""
+    Takes json data and returns its text as a Frequency Distribution
+    
+    Parameters
+    ----------
+    data : list of dicts
+        The yelp data to be analyzed
+    
+    Returns
+    -------
+    An nltk Frequency Distribution
+        Returns the frequency distribution of all tokens within the reviews
+        of the yelp data
+"""
 def get_freq_dist(data):
     tokens = []
     for review in data:
@@ -58,7 +130,21 @@ def get_freq_dist(data):
     tokens = remove_stopwords_inner(tokens, stopwords = stopwords.words('english') + ['time', 'would', 'got', 'i\'m', '-', 'food', 'like', 'really', 'service'])
     return FreqDist(tokens)
 
-#wtf
+"""
+    Takes json data and return a document term matrix consisting of all the tokens
+    within the text of review data and how many times they are used (with stopwords
+    removed)
+    
+    Parameters
+    ----------
+    data : list of dicts
+        The yelp data to be analyzed
+    
+    Returns
+    -------
+    A transformed count vectorizer
+        Returns a document term matrix of all tokens and their frequencies
+"""
 def get_count_vect(data):
     tokens = []
     count_vect = CountVectorizer(stop_words = stopwords.words("english"))
@@ -109,6 +195,28 @@ def plot_review_length(data, n_fold):
     return (fig, axes)
 
 #Takes the data and removes reviews that do not go past the min or exceed the max. Returns back list of dict.
+"""
+    Takes json data and removes any entries with review lengths above or
+    below set limits
+    
+    Parameters
+    ----------
+    data : a list of dicts
+        The yelp data to be analyzed
+    
+    min_len : int
+        The minimum cut off point. If a review is less than this, it is removed
+    
+    max_len : int
+        The maximum cut off point. If a review is more than this, it is removed
+    
+    Returns
+    -------
+    list of dicts
+        Returns the json data with review with lengths above or below parameters
+        removed
+    
+"""
 def remove_reviews(data, min_len, max_len):
     copy = []
     for review in data:
