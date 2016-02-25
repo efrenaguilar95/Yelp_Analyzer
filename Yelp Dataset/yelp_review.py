@@ -11,7 +11,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-"""
+def tokenize_simple(text):
+    """
     Tokenizes a string and returns it as a bag of words
 
     Parameters
@@ -23,8 +24,7 @@ import math
     -------
     list of strs
         One string for each token in the document, in the same order as the original
-"""
-def tokenize_simple(text):
+    """
     #punctuation = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
     #replace_punctuation = str.maketrans(punctuation, " "*len(punctuation))
     text = text.lower()
@@ -33,7 +33,8 @@ def tokenize_simple(text):
     text = text.strip()
     return text.split()
 
-"""
+def remove_stopwords_inner(tokens, stopwords):   
+    """
     Removes stopwords within a bag of words
     
     Parameters
@@ -47,13 +48,13 @@ def tokenize_simple(text):
     -------
     list of strs
         Returns the new bag of words, with all of the stopwords removed
-"""
-def remove_stopwords_inner(tokens, stopwords):   
+    """
     stopwords = set(stopwords)
     tokens = [word for word in tokens if word not in stopwords]
     return tokens
 
-"""
+def load_json_data(file, data_amount):
+    """
     Loads the json data from a file and returns it as a dictionary
     
     Parameters
@@ -67,8 +68,7 @@ def remove_stopwords_inner(tokens, stopwords):
     -------
     list of dicts
         Returns the json data, represented by a list of dictionaries
-"""
-def load_json_data(file, data_amount):
+    """
     data = []    
     with open(file) as f:
         count = 0
@@ -79,8 +79,8 @@ def load_json_data(file, data_amount):
             data.append(json.loads(line))
     return data
 
-#Splits the data into positive and negative reviews, caps the length of list
-"""
+def split_by_rating(data, cap):
+    """
     Splits json data based on if a review is positive or negative with a max
     number of positive and negative reviews
     
@@ -96,8 +96,7 @@ def load_json_data(file, data_amount):
     two lists of json dicts
         Returns two lists of json data. One for positive data, one for negative
         data
-"""
-def split_by_rating(data, cap):
+    """
     positive = []
     negative = []
     for review in data:
@@ -109,7 +108,8 @@ def split_by_rating(data, cap):
 
 #'DASH IS TEMPORARY FIX'
 # DAMN PETER back at it again with that temporary fix
-"""
+def get_freq_dist(data):
+    """
     Takes json data and returns its text as a Frequency Distribution
     
     Parameters
@@ -122,15 +122,16 @@ def split_by_rating(data, cap):
     An nltk Frequency Distribution
         Returns the frequency distribution of all tokens within the reviews
         of the yelp data
-"""
-def get_freq_dist(data):
+    """
     tokens = []
     for review in data:
         tokens += tokenize_simple(review['text'])
     tokens = remove_stopwords_inner(tokens, stopwords = stopwords.words('english') + ['time', 'would', 'got', 'i\'m', '-', 'food', 'like', 'really', 'service'])
     return FreqDist(tokens)
 
-"""
+
+def get_count_vect(data):
+    """
     Takes json data and return a document term matrix consisting of all the tokens
     within the text of review data and how many times they are used (with stopwords
     removed)
@@ -144,16 +145,33 @@ def get_freq_dist(data):
     -------
     A transformed count vectorizer
         Returns a document term matrix of all tokens and their frequencies
-"""
-def get_count_vect(data):
+    """
     tokens = []
     count_vect = CountVectorizer(stop_words = stopwords.words("english"))
     for review in data:
         tokens += tokenize_simple(review['text'])
     return count_vect.fit_transform(tokens)
     
-#Takes list of data.most_common yelp and a word limit to process a bar graph of # of most common words
+
 def plot_common_words(data, word_limit):
+    """
+    Takes json data and creates a bar graph of the n most common words
+    
+    Parameters
+    ----------
+    data : list of dicts
+        The yelp data to be analyzed
+    
+    word_limit : int
+        The max amount of most common words to be displayed
+    
+    Returns
+    -------
+    A matplot bar graph
+        Returns a bar graph of the n most common words and their frequency
+        distribution
+    
+    """
     freq = get_freq_dist(data).most_common(word_limit)
     fig, axes = plt.subplots()    
     fig.suptitle('Most Common Words' )
@@ -172,8 +190,25 @@ def plot_common_words(data, word_limit):
     plt.xticks(x, histList)
     return (fig, axes)
 
-#Takes list of yelp data and splits data, converts to list of length for reviews and charts it.
 def plot_review_length(data, n_fold):
+    """
+    Takes json data and creates a bar graph of n groups of review lengths that
+    have been found in the data
+    
+    Parameters
+    ----------
+    data : list of dicts
+        The yelp data to be analyzed
+    
+    n_fold : int
+        The number of groups for review length
+    
+    Returns
+    -------
+    A matplot bar graph
+        Returns a bar graph displaying review length distribution
+    
+    """
     fig, axes = plt.subplots()
     fig.suptitle('Length of Reviews Bar Graph')
     axes.set_xlabel('Length of Review')
@@ -195,7 +230,9 @@ def plot_review_length(data, n_fold):
     return (fig, axes)
 
 #Takes the data and removes reviews that do not go past the min or exceed the max. Returns back list of dict.
-"""
+
+def remove_reviews(data, min_len, max_len):
+    """
     Takes json data and removes any entries with review lengths above or
     below set limits
     
@@ -216,8 +253,7 @@ def plot_review_length(data, n_fold):
         Returns the json data with review with lengths above or below parameters
         removed
     
-"""
-def remove_reviews(data, min_len, max_len):
+    """
     copy = []
     for review in data:
         if min_len < len(review['text']) < max_len:
@@ -271,17 +307,3 @@ if __name__ == '__main__':
           % np.mean(predicted_bernoulliNB == test_target) )    
     print('Accuracy with Logistic Regression: ', '%.4f'
           % np.mean(predicted_LR == test_target))
-#    pos_dist = get_freq_dist(positive)
-#    neg_dist = get_freq_dist(negative)
-#    pos_vect = get_count_vect(positive)
-#    #neg_vect = get_count_vect(negative)
-#    
-#    tf_transformer = TfidfTransformer();
-#    pos_transform = tf_transformer.fit_transform(pos_vect)
-#    #neg_transform = tf_transformer.transform(neg_vect)
-#    
-#    
-#    
-##    print(pos_dist.most_common(69))
-##    print ('\n\n')
-##    print(neg_dist.most_common(69))            
