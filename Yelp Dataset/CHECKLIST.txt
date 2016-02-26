@@ -1,0 +1,8 @@
+Checklist
+- Finish my sentiment analysis (also if possible speed up the analysis)
+- Try using other lexicons, see wussup
+- Find a way to gather more bigrams
+- Weigh bigrams more for reviews
+- Ask professor questions (bigram help, other ways to increase accuracy)
+- Thinking ahead: Predict star rating (excluding 3 range)
+- Thinking ahead: Bar graphs (or something similar) to compare previous accuracies to the accuracy turned in at final
