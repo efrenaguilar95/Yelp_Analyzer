@@ -6,3 +6,5 @@ Checklist
 - Ask professor questions (bigram help, other ways to increase accuracy)
 - Thinking ahead: Predict star rating (excluding 3 range)
 - Thinking ahead: Bar graphs (or something similar) to compare previous accuracies to the accuracy turned in at final
+
+-UPDATE 2/29: We need to account for how we check for bigrams within our weighing function.
