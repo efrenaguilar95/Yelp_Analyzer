@@ -1,5 +1,6 @@
 #Get data
-import json, re
+import json
+import token_helpers
 
 #FreqDist maybe remove
 from nltk.probability import FreqDist, ConditionalFreqDist
@@ -21,48 +22,6 @@ from sklearn.svm import NuSVC
 from nltk.collocations import BigramCollocationFinder
 from nltk.metrics import BigramAssocMeasures
 from nltk.corpus import stopwords
-       
-def tokenize_simple(text):
-    """
-    Tokenizes a string and returns it as a bag of words
-
-    Parameters
-    ----------
-    text : str
-        A string of raw text to be tokenized
-    
-    Returns
-    -------
-    list of strs
-        One string for each token in the document, in the same order as the original
-    """
-    punctuation = '!"#$%&\()*+,-./:;<=>?@[\\]^_`{|}~'
-    replace_punctuation = str.maketrans(punctuation, " "*len(punctuation))
-    text = text.lower()
-    text = text.translate(replace_punctuation)
-    text = re.sub(r" {2,}", " ", text)
-    text = text.strip()
-    return text.split()
-
-def remove_stopwords_inner(tokens, stopwords):   
-    """
-    Removes stopwords within a bag of words
-    
-    Parameters
-    ----------
-    tokens : list of strs
-        The bag of words to be edited
-    stopwords : list of strs
-        The list of stopwords to be removed from the bag of words
-    
-    Returns
-    -------
-    list of strs
-        Returns the new bag of words, with all of the stopwords removed
-    """
-    stopwords = set(stopwords)
-    tokens = [word for word in tokens if word not in stopwords]
-    return tokens
 
 def load_json_data(file, data_amount):
     """
@@ -147,40 +106,6 @@ def remove_reviews(data, min_len, max_len):
         if min_len < len(review['text']) < max_len:
             copy.append(review)
     return copy
-
-def bag_of_words(words):
-    #Simple, tokenized, bag of words!    
-    data = [];
-    for word in words:
-        for w in tokenize_simple(word):
-            data.append(w)
-    return dict([(word, True) for word in set(data)])
-    
-def bag_of_bestwords(words):
-    data = [];
-    for word in words:
-        for w in tokenize_simple(word):
-            data.append(w)
-    return dict([(word, True) for word in set(data) if word in bestwords])
-    
-def bag_of_words_remove(words, badwords):
-    #Removes words we do not want in our bag of words.
-    return bag_of_words(set(words) - set(badwords))
-    
-def bag_of_words_good(words, goodwords):
-    return bag_of_words(set(words) & set(goodwords))
-    
-def bag_of_stopwords(words, stopfile='english'):
-    #Removes stopwords. Can be manually set.
-    badwords = stopwords.words(stopfile)
-    return bag_of_words_remove(words, badwords)
-    
-def bag_of_bigrams(words, score_fn=BigramAssocMeasures.chi_sq, n=200):
-    #Returns not only a bag of words, but a bag of bigrams holy mother dam daniel dude so op wtf.
-    #Maximum number of bigrams is 'n' AKA n=200
-    finder = BigramCollocationFinder.from_words(words)
-    bigrams = finder.nbest(score_fn, n)
-    return bag_of_words(words + bigrams)
     
 def precision_and_recall(classifier, testfeats):
     #Finds precision and recall on that big booty classifier.
@@ -224,15 +149,15 @@ def high_words(posids, negids, cutoff, score_fn=BigramAssocMeasures.chi_sq, min_
         pos += 1
         if (pos != cutoff):
             for word in review['text'].split(' '):
-                word_fd.update(tokenize_simple(word))
-                label_word_fd['pos'].update(tokenize_simple(word))
+                word_fd.update(token_helpers.tokenize_simple(word))
+                label_word_fd['pos'].update(token_helpers.tokenize_simple(word))
  
     for review in negids:
         neg += 1
         if (neg != cutoff):
             for word in review['text'].split(' '):
-                word_fd.update(tokenize_simple(word))
-                label_word_fd['neg'].update(tokenize_simple(word))
+                word_fd.update(token_helpers.tokenize_simple(word))
+                label_word_fd['neg'].update(token_helpers.tokenize_simple(word))
     
     pos_word_count = label_word_fd['pos'].N()
     neg_word_count = label_word_fd['neg'].N()
@@ -247,18 +172,68 @@ def high_words(posids, negids, cutoff, score_fn=BigramAssocMeasures.chi_sq, min_
     bestwords = set([w for w, s in best])
     return bestwords
     
-def evaluate_classifier(featx, split=0.75):
+    """
+def create_train_and_test_set(data, cap, split=0.75):
+    {
+    
+        return train_set, test_set
+    }
+    """
+
+def create_train_and_test_sets(posData, negData, bow_func, bestWords = [], bestOnly = False, split=0.75):
+    """
+    Takes positive and negative data and splits them into a training and testing
+    set, split by a given percentage.
+    
+    Parameters
+    ----------
+    posData : a list of dicts
+        A list of positive yelp review data
+    
+    negData : a list of dicts
+        A list of negative yelp review data
+    
+    bestWords : an iterable of strings
+        The tokens to keep in the data sets
+        Default : an empty list. bestWords should only be assigned if bestOnly
+        is assigned as True
+    
+    bestonly : bool
+        True if only the words in bestWords should be kept
+        False if all words should be kept
+        Default : False
+    
+    split : float
+        The percentage of data to use for training, the rest will be used for
+        testing
+    
+    Returns
+    -------
+    two lists : train_set, test_set
+        Returns a list of training and testing data in the format
+        [[list of words in document], label]
+    
+    """
+    if (bestOnly):
+        negfeats = [((bow_func(f["text"].split(' '), bestWords), "neg")) for f in negData]
+        posfeats = [((bow_func(f["text"].split(' '), bestWords), "pos")) for f in posData]            
+    else:
+        negfeats = [((bow_func(f["text"].split(' ')), "neg")) for f in negids]
+        negfeats = [((bow_func(f["text"].split(' ')), "neg")) for f in negids]
+    negcutoff = int(len(negfeats)*split)
+    poscutoff = int(len(posfeats)*split)
+    train_set = negfeats[:negcutoff] + posfeats[:poscutoff]
+    test_set = negfeats[negcutoff:] + posfeats[poscutoff:]
+    return train_set,test_set
+            
+            
+
+def evaluate_classifier(trainfeats, testfeats, split=0.75):
     #featx the bag of words function to use
     #This function will do many things listed here.
     # 1) It will split the categories AKA the negative and positive reviews
     # 2) It will add a cutoff so that 75% is training data, 25% is testing
     # 3) It will then train the classifier and print out whatever is needed.
-    negfeats = [((featx(f['text'].split(' ')), 'neg')) for f in negids]
-    posfeats = [((featx(f['text'].split(' ')), 'pos')) for f in posids]
-    negcutoff = int(len(negfeats)*split)
-    poscutoff = int(len(posfeats)*split)
-    trainfeats = negfeats[:negcutoff] + posfeats[:poscutoff]
-    testfeats = negfeats[negcutoff:] + posfeats[poscutoff:]
     print ('train on %d instances, test on %d instances' % (len(trainfeats), len(testfeats))) 
     mb_classifier = SklearnClassifier(MultinomialNB()).train(trainfeats)
     lr_classifier = SklearnClassifier(LogisticRegression()).train(trainfeats)
@@ -268,13 +243,7 @@ def evaluate_classifier(featx, split=0.75):
                        (lr_classifier, 'Logistic Regression'),
                        (lsvm_classifier, 'Linear Support Vector Machine'),
                        (nsvm_classifier, 'Nu Support Vector Machine')]
-#    refsets = collections.defaultdict(set)
-#    testsets = collections.defaultdict(set)
-#    for i, (feats, label) in enumerate(testfeats):
-#        refsets[label].add(i)
-#        observed = classifier.classify(feats)
-#        testsets[observed].add(i)
-    
+                       
     #PRINTS OUT ACCURACY, RECALL, AND PRECISION FOR CLASSIFIERS
     for classifier, name in classifier_list:
         prec, rec = precision_and_recall(classifier, testfeats)
@@ -300,6 +269,7 @@ if __name__ == '__main__':
     cap = 5000
     posids, negids = split_by_rating(data[250000:1500000], cap)
     bestwords = high_words(posids, negids, int(cap*2*0.75))
-    evaluate_classifier(bag_of_bestwords)    
+    train_data, test_data = create_train_and_test_sets(posids, negids, token_helpers.bag_of_bestwords, bestwords, True)
+    evaluate_classifier(train_data, test_data)    
 
     

@@ -1,4 +1,4 @@
-import json, re
+import json
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk import FreqDist
@@ -11,28 +11,8 @@ from sklearn.linear_model import LogisticRegression
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import token_helpers
 global counter
-def tokenize_simple(text):
-    """
-    Tokenizes a string and returns it as a bag of words
-
-    Parameters
-    ----------
-    text : str
-        A string of raw text to be tokenized
-    
-    Returns
-    -------
-    list of strs
-        One string for each token in the document, in the same order as the original
-    """
-    #punctuation = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
-    #replace_punctuation = str.maketrans(punctuation, " "*len(punctuation))
-    text = text.lower()
-    #text = text.translate(replace_punctuation)
-    text = re.sub(r" {2,}", " ", text)
-    text = text.strip()
-    return text.split()
     
 def tokenize_advanced(text, weight):
     """
@@ -53,7 +33,7 @@ def tokenize_advanced(text, weight):
     global counter
     counter = counter + 1
     print(counter)    
-    tokens = tokenize_simple(text)
+    tokens = token_helpers.tokenize_simple(text)
     tagged_tokens = pos_tag(tokens, tagset = 'universal')
     result = []
     previous = None
@@ -64,26 +44,6 @@ def tokenize_advanced(text, weight):
             result.append(previous[0] + ' ' + t[0])
     for bigram in result:
         tokens = tokens + ([bigram] * weight)
-    return tokens
-
-def remove_stopwords_inner(tokens, stopwords):   
-    """
-    Removes stopwords within a bag of words
-    
-    Parameters
-    ----------
-    tokens : list of strs
-        The bag of words to be edited
-    stopwords : list of strs
-        The list of stopwords to be removed from the bag of words
-    
-    Returns
-    -------
-    list of strs
-        Returns the new bag of words, with all of the stopwords removed
-    """
-    stopwords = set(stopwords)
-    tokens = [word for word in tokens if word not in stopwords]
     return tokens
 
 def load_json_data(file, data_amount):
@@ -158,8 +118,8 @@ def get_freq_dist(data):
     """
     tokens = []
     for review in data:
-        tokens += tokenize_simple(review['text'])
-    tokens = remove_stopwords_inner(tokens, stopwords = stopwords.words('english') + ['time', 'would', 'got', 'i\'m', '-', 'food', 'like', 'really', 'service'])
+        tokens += token_helpers.tokenize_simple(review['text'])
+    tokens = token_helpers.remove_stopwords_inner(tokens, stopwords = stopwords.words('english') + ['time', 'would', 'got', 'i\'m', '-', 'food', 'like', 'really', 'service'])
     return FreqDist(tokens)
 
 
@@ -182,7 +142,7 @@ def get_count_vect(data):
     tokens = []
     count_vect = CountVectorizer(stop_words = stopwords.words("english"))
     for review in data:
-        tokens += tokenize_simple(review['text'])
+        tokens += token_helpers.tokenize_simple(review['text'])
     return count_vect.fit_transform(tokens)
     
 

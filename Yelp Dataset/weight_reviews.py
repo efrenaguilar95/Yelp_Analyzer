@@ -1,4 +1,5 @@
 import json, re
+import token_helpers
 from nltk.corpus import stopwords
 import numpy as np
 
@@ -34,10 +35,6 @@ def load_json_data(file, data_amount):
             data.append(json.loads(line))
     return data
 
-def remove_stopwords_inner(tokens, stopwords):   
-    stopwords = set(stopwords)
-    tokens = [word for word in tokens if word not in stopwords]
-    return tokens
 
 if __name__ == '__main__':
     data = load_json_data('yelp_academic_dataset_review.json', 10000)
