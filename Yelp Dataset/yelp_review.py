@@ -354,6 +354,12 @@ def get_most_common_count_vect_n_grams(count_vect, doc_matrix, x, n = 0):
 
 ### MAIN FUNCTION    
 if __name__ == '__main__':
+    """Need to try implementing text classifier as follows:
+        group text into 2 categories, positive and negative
+        create a transform/classifer to test and train on overall dataset
+        using these two categories
+        Run tests on this classifier
+        Find ways to improve it"""
     counter = 0;
     
     #Load the yelp data
@@ -361,12 +367,12 @@ if __name__ == '__main__':
 
     
     #Setup the training dataset
-    positive_train, negative_train = split_by_rating(data[:14000], 2500)    
+    positive_train, negative_train = split_by_rating(data[:14000], 500)    
     train_target = np.array([1]*len(positive_train) + [0]*len(negative_train))
     train_data = positive_train+negative_train
     
     #Setup the testing dataset
-    positive_test, negative_test = split_by_rating(data[14000:], 2500)
+    positive_test, negative_test = split_by_rating(data[14000:], 500)
     test_target = np.array([1]*len(positive_test) + [0]*len(negative_test))
     test_data = positive_test + negative_test
     
@@ -378,7 +384,7 @@ if __name__ == '__main__':
     
     #print(tokenize_advanced(train_data[0]['text'],100))
     print(len(positive_test))
-    #count_vect = CountVectorizer(tokenizer = lambda text: tokenize_advanced(text,100), stop_words = stopwords.words("english"))
+    #count_vect = CountVectorizer(tokenizer = lambda text: tokenize_advanced(text,3), stop_words = stopwords.words("english"))
     #count_vect = CountVectorizer(ngram_range = (1,2), stop_words = stopwords.words("english"))
     count_vect = CountVectorizer(stop_words = stopwords.words("english"))
     print("WTF DAVID BLAINE")
@@ -391,8 +397,8 @@ if __name__ == '__main__':
     X_train_counts = count_vect.fit_transform(train_tokens)
      
     #prints the most common words in the CountVectorizer
-    #k = get_most_common_count_vect(count_vect, X_train_counts, 100)
-    #j = get_most_common_count_vect_n_grams(count_vect, X_train_counts, 100)
+    k = get_most_common_count_vect(count_vect, X_train_counts, 100)
+    j = get_most_common_count_vect_n_grams(count_vect, X_train_counts, 100)
     #print(k)
     #print(j)
     

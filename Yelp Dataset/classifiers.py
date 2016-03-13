@@ -187,14 +187,27 @@ def precision_and_recall(classifier, testfeats):
     refsets = collections.defaultdict(set)
     testsets = collections.defaultdict(set)
     
+    
+    #Feats is the dictionary of words
+    #label is the label, pos or neg
     for i, (feats, label) in enumerate(testfeats):
+        
+        #a mapping of which entries are pos and negative
+        #ex refsets[pos] = {1,2,3,4,6,7,11,78}
         refsets[label].add(i)
+        
+        #Classifies something as pos or neg given its feats
         observed = classifier.classify(feats)
+        
+        #a mapping of entries and their classifications
+        #ex testsets[pos] = {1,2,3,4,5,8,11}
         testsets[observed].add(i)
         
         prec = {}
         rec = {}
         
+        #Is this indentation correct???
+        #Wouldn't it just need to run once???
         for label in classifier.labels():
             prec[label] = precision(refsets[label], testsets[label])
             rec[label] = recall(refsets[label], testsets[label])
@@ -235,6 +248,7 @@ def high_words(posids, negids, cutoff, score_fn=BigramAssocMeasures.chi_sq, min_
     return bestwords
     
 def evaluate_classifier(featx, split=0.75):
+    #featx the bag of words function to use
     #This function will do many things listed here.
     # 1) It will split the categories AKA the negative and positive reviews
     # 2) It will add a cutoff so that 75% is training data, 25% is testing
@@ -276,7 +290,6 @@ def evaluate_classifier(featx, split=0.75):
     
 ### MAIN FUNCTION    
 if __name__ == '__main__':
-    pass
     """Need to try implementing text classifier as follows:
         group text into 2 categories, positive and negative
         create a transform/classifer to test and train on overall dataset
