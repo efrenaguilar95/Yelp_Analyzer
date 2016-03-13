@@ -379,7 +379,8 @@ if __name__ == '__main__':
     #print(tokenize_advanced(train_data[0]['text'],100))
     print(len(positive_test))
     #count_vect = CountVectorizer(tokenizer = lambda text: tokenize_advanced(text,100), stop_words = stopwords.words("english"))
-    count_vect = CountVectorizer(ngram_range = (1,2), stop_words = stopwords.words("english"))
+    #count_vect = CountVectorizer(ngram_range = (1,2), stop_words = stopwords.words("english"))
+    count_vect = CountVectorizer(stop_words = stopwords.words("english"))
     print("WTF DAVID BLAINE")
     train_tokens = []
     test_tokens = []
