@@ -2,6 +2,7 @@ import json, re
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk import FreqDist
+from nltk import pos_tag
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.naive_bayes import MultinomialNB
@@ -10,7 +11,7 @@ from sklearn.linear_model import LogisticRegression
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-
+global counter
 def tokenize_simple(text):
     """
     Tokenizes a string and returns it as a bag of words
@@ -32,6 +33,38 @@ def tokenize_simple(text):
     text = re.sub(r" {2,}", " ", text)
     text = text.strip()
     return text.split()
+    
+def tokenize_advanced(text, weight):
+    """
+    Tokenizes a string and returns it as a bag of words, including bigrams
+    
+    Parameters
+    ----------
+    text : str
+        A string of raw text to be tokenized
+    weight : int
+        The weight to give to each bigram
+    
+    Returns
+    -------
+    list of strs
+        One string for each token in the document, in the same order as the original
+    """
+    global counter
+    counter = counter + 1
+    print(counter)    
+    tokens = tokenize_simple(text)
+    tagged_tokens = pos_tag(tokens, tagset = 'universal')
+    result = []
+    previous = None
+    #Will be replaced later with internal functions from a pos.py file
+    for index, t in enumerate(tagged_tokens):
+        if t[1] == "ADJ" and index != 0:
+            previous = tagged_tokens[index -1]
+            result.append(previous[0] + ' ' + t[0])
+    for bigram in result:
+        tokens = tokens + ([bigram] * weight)
+    return tokens
 
 def remove_stopwords_inner(tokens, stopwords):   
     """
@@ -229,8 +262,6 @@ def plot_review_length(data, n_fold):
     plt.xticks(x, range_list)
     return (fig, axes)
 
-#Takes the data and removes reviews that do not go past the min or exceed the max. Returns back list of dict.
-
 def remove_reviews(data, min_len, max_len):
     """
     Takes json data and removes any entries with review lengths above or
@@ -259,28 +290,97 @@ def remove_reviews(data, min_len, max_len):
         if min_len < len(review['text']) < max_len:
             copy.append(review)
     return copy
+    
+def get_most_common_count_vect(count_vect, doc_matrix, x):
+    """
+    Document matrices have no way to return the most common words within them
+    this fixes that problem
+    WARNING: VERY SLOW
+    This function analyzes the entire document matrix, expect a long wait time
+
+    Parameters
+    ----------
+    count_vect: A CountVectorizer
+        The CountVectorizer used to create the document matrix
+    
+    doc_matrix: A document matrix
+        The document matrix transformed from the CountVectorizer
+    
+    x : int
+        How many words to return
+    
+    Returns
+    ------
+    list
+        Returns a sorted list consisting of x most common tokens
+    """
+    
+    freqs = [(word, X_train_counts.getcol(idx).sum()) for word, idx in count_vect.vocabulary_.items()]
+    return sorted(freqs, key = lambda x:-x[1])[:x]
+    
+def get_most_common_count_vect_n_grams(count_vect, doc_matrix, x, n = 0):
+    """
+    N_grams often are much less frequent the single word tokens. This function
+    alleviates that by only taking n_grams into account
+    WARNING: VERY SLOW
+    This function analyzes the entire document matrix, expect a long wait time   
+    
+
+    Parameters
+    ----------
+    count_vect: A CountVectorizer
+        The CountVectorizer used to create the document matrix
+    
+    doc_matrix: A document matrix
+        The document matrix transformed from the CountVectorizer
+    
+    x : int
+        How many words to return
+    
+    n : int
+        Which n_grams to return, default is all of them
+    
+    Returns
+    ------
+    list
+        Returns a sorted list consisting of n most common tokens
+    """
+    freqs = get_most_common_count_vect(count_vect, doc_matrix, -1)
+    if(n == 0):
+        freqs = [item for item in freqs if " " in item[0]]
+    else:
+        freqs = [item for item in freqs if item[0].count(" ") == n]
+    return freqs[:x]
 
 ### MAIN FUNCTION    
 if __name__ == '__main__':
-    pass
-    """Need to try implementing text classifier as follows:
-        group text into 2 categories, positive and negative
-        create a transform/classifer to test and train on overall dataset
-        using these two categories
-        Run tests on this classifier
-        Find ways to improve it"""
-    data = load_json_data('yelp_academic_dataset_review.json', 40000)
-    train_target = []
-    positive_train, negative_train = split_by_rating(data[:14000], 2500)
-    plot_common_words(positive_train, 20)
-    plot_common_words(negative_train, 20)
-#    plot_review_length(positive_train, 10)
+    counter = 0;
+    
+    #Load the yelp data
+    data = load_json_data('yelp_academic_dataset_review.json', 20000)
+
+    
+    #Setup the training dataset
+    positive_train, negative_train = split_by_rating(data[:14000], 2500)    
     train_target = np.array([1]*len(positive_train) + [0]*len(negative_train))
     train_data = positive_train+negative_train
+    
+    #Setup the testing dataset
     positive_test, negative_test = split_by_rating(data[14000:], 2500)
     test_target = np.array([1]*len(positive_test) + [0]*len(negative_test))
     test_data = positive_test + negative_test
-    count_vect = CountVectorizer(stop_words = stopwords.words("english"))
+    
+    #Some initial dataset graphical analyses    
+    plot_common_words(positive_train, 20)
+    plot_common_words(negative_train, 20)
+#   plot_review_length(positive_train, 10)
+    
+    
+    #print(tokenize_advanced(train_data[0]['text'],100))
+    print(len(positive_test))
+    #count_vect = CountVectorizer(tokenizer = lambda text: tokenize_advanced(text,100), stop_words = stopwords.words("english"))
+    count_vect = CountVectorizer(ngram_range = (1,2), stop_words = stopwords.words("english"))
+    print("WTF DAVID BLAINE")
     train_tokens = []
     test_tokens = []
     for review in train_data:
@@ -288,6 +388,14 @@ if __name__ == '__main__':
     for review in test_data:
         test_tokens += [review['text']]
     X_train_counts = count_vect.fit_transform(train_tokens)
+     
+    #prints the most common words in the CountVectorizer
+    #k = get_most_common_count_vect(count_vect, X_train_counts, 100)
+    #j = get_most_common_count_vect_n_grams(count_vect, X_train_counts, 100)
+    #print(k)
+    #print(j)
+    
+    
     X_test_counts = count_vect.transform(test_tokens)
     tf_transformer = TfidfTransformer()
     X_train_tfidf = tf_transformer.fit_transform(X_train_counts)

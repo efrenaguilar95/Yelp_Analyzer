@@ -151,3 +151,4 @@ if __name__ == '__main__':
     print ('neg precision:', precision(refsets['neg'], testsets['neg']))
     print ('neg recall:', recall(refsets['neg'], testsets['neg']))
     print ('neg F-measure:', f_measure(refsets['neg'], testsets['neg']))
+    classifier.show_most_informative_features()

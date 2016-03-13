@@ -93,6 +93,19 @@ def find_adjective(tokens):
             result.append(previous[0] + ' ' + t[0])        
     
     return result
+
+def find_adjectives_and_adverbs(tokens):
+    tagged_tokens = nltk.pos_tag(tokens, tagset = 'universal')
+    result = []
+    
+    for index, t in enumerate(tagged_tokens):
+        if t[1] == 'ADJ' and index != len(tagged_tokens):
+            nextToken = tagged_tokens[index + 1]
+            result.append(t[0] + ' ' + nextToken[0])
+        if t[1] == 'ADV' and index != 0:
+            previous = tagged_tokens[index - 1]
+            result.append(previous[0] + ' ' + t[0])
+    return result
     
 def split_by_rating(data, cap):
     positive = []
@@ -115,7 +128,9 @@ def get_two_worded_freq_dist(data):
     for review in data:
         tokens += tokenize_simple(review['text'])
     tokens = remove_stopwords_inner(tokens, stopwords = stopwords.words('english') + ['time', 'would', 'got', 'i\'m', '-', 'food', 'like', 'really', 'service'])
+    print(len(tokens))
     new_tokens = find_adjective(tokens)
+    #new_tokens = find_adjectives_and_adverbs(tokens)
     return FreqDist(new_tokens)
 
 
