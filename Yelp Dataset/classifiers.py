@@ -131,11 +131,9 @@ def precision_and_recall(classifier, testfeats):
         prec = {}
         rec = {}
         
-        #Is this indentation correct???
-        #Wouldn't it just need to run once???
-        for label in classifier.labels():
-            prec[label] = precision(refsets[label], testsets[label])
-            rec[label] = recall(refsets[label], testsets[label])
+    for label in classifier.labels():
+        prec[label] = precision(refsets[label], testsets[label])
+        rec[label] = recall(refsets[label], testsets[label])
     
     return prec, rec
 
@@ -215,11 +213,11 @@ def create_train_and_test_sets(posData, negData, bow_func, bestWords = [], bestO
     
     """
     if (bestOnly):
-        negfeats = [((bow_func(f["text"].split(' '), bestWords), "neg")) for f in negData]
-        posfeats = [((bow_func(f["text"].split(' '), bestWords), "pos")) for f in posData]            
+        negfeats = [((bow_func(f["text"], bestWords), "neg")) for f in negData]
+        posfeats = [((bow_func(f["text"], bestWords), "pos")) for f in posData]            
     else:
-        negfeats = [((bow_func(f["text"].split(' ')), "neg")) for f in negids]
-        negfeats = [((bow_func(f["text"].split(' ')), "neg")) for f in negids]
+        negfeats = [((bow_func(f["text"]), "neg")) for f in negData]
+        posfeats = [((bow_func(f["text"]), "pos")) for f in posData]
     negcutoff = int(len(negfeats)*split)
     poscutoff = int(len(posfeats)*split)
     train_set = negfeats[:negcutoff] + posfeats[:poscutoff]
@@ -269,7 +267,8 @@ if __name__ == '__main__':
     cap = 5000
     posids, negids = split_by_rating(data[250000:1500000], cap)
     bestwords = high_words(posids, negids, int(cap*2*0.75))
-    train_data, test_data = create_train_and_test_sets(posids, negids, token_helpers.bag_of_bestwords, bestwords, True)
-    evaluate_classifier(train_data, test_data)    
-
+    #train_data, test_data = create_train_and_test_sets(posids, negids, token_helpers.bag_of_bestwords, bestwords, True)
+    train_data, test_data = create_train_and_test_sets(posids, negids, token_helpers.bag_of_bestwords_and_bigrams, bestwords, True)
+    evaluate_classifier(train_data, test_data)
+    k = token_helpers.bag_of_bestwords_and_bigrams(posids[1]["text"], bestwords)
     
