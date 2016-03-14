@@ -144,6 +144,19 @@ if __name__ == '__main__':
         refsets[label].add(i)
         observed = classifier.classify(feats)
         testsets[observed].add(i)
+        
+    #cross validation  3-fold   
+    feats = negfeats + posfeats
+    M = math.floor(len(feats)/ 3)
+    result = []
+    for n in range(3):
+        val_set = feats[n*M:][:M]
+        train_set = feats[(n+1)*M:] + feats[:n*M]
+        classifier = nltk.NaiveBayesClassifier.train(train_set)
+        result.append("{:.4f}".format(round(nltk.classify.accuracy(classifier, val_set)*100,4)))
+    
+    print('cross_validation:', result)
+ 
  
     print ('pos precision:', precision(refsets['pos'], testsets['pos']))
     print ('pos recall:', recall(refsets['pos'], testsets['pos']))
